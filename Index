@@ -1,0 +1,726 @@
+<!DOCTYPE html>
+<html lang="en">
+<head>
+  <meta charset="UTF-8">
+  <title>Risto Bakes - Order & Bill Generator</title>
+  <style>
+    /* Base Color Variables for Dark/Light Mode */
+    :root {
+      --bg-gradient: linear-gradient(135deg, #fff5f5 0%, #ffe4e6 100%);
+      --text-color: #4a4a4a;
+      --card-bg: #ffffff;
+      --card-border: rgba(251, 207, 232, 0.6);
+      --heading-color: #d63384;
+      --subheading-color: #9d174d;
+      --input-border: #fbcfe8;
+      --input-bg: #ffffff;
+      --dash-bg: #ffffff;
+      --receipt-bg: #fff9fb;
+    }
+
+    body.dark-mode {
+      --bg-gradient: linear-gradient(135deg, #18181b 0%, #0f0f11 100%);
+      --text-color: #e4e4e7;
+      --card-bg: #27272a;
+      --card-border: rgba(244, 114, 182, 0.2);
+      --heading-color: #f472b6;
+      --subheading-color: #fbcfe8;
+      --input-border: #52525b;
+      --input-bg: #18181b;
+      --dash-bg: #27272a;
+      --receipt-bg: #18181b;
+    }
+
+    /* Base Styles */
+    body { 
+      font-family: 'Segoe UI', Tahoma, Geneva, Verdana, sans-serif; 
+      background: var(--bg-gradient); 
+      color: var(--text-color); 
+      margin: 0; 
+      padding: 30px 20px;
+      min-height: 100vh;
+      transition: background 0.3s ease, color 0.3s ease;
+    }
+    
+    .app-container { 
+      max-width: 1050px; 
+      margin: 0 auto; 
+      display: grid; 
+      grid-template-columns: 1fr 1fr; 
+      gap: 25px; 
+    }
+
+    /* Top Bar & Theme Toggle */
+    .top-controls {
+      grid-column: 1 / -1;
+      display: flex;
+      justify-content: flex-end;
+      margin-bottom: -10px;
+    }
+    .theme-toggle-btn {
+      width: auto !important;
+      padding: 8px 16px !important;
+      margin: 0 !important;
+      font-size: 0.85em !important;
+      background: linear-gradient(135deg, #6b7280 0%, #4b5563 100%) !important;
+    }
+
+    /* Header & Embedded Logo */
+    .brand-header {
+      grid-column: 1 / -1;
+      text-align: center;
+      margin-bottom: 5px;
+    }
+    .logo-img {
+      width: 90px;
+      height: 90px;
+      border-radius: 50%;
+      box-shadow: 0 4px 12px rgba(0,0,0,0.15);
+      margin-bottom: 8px;
+    }
+    .brand-title {
+      font-size: 2.2em;
+      color: var(--heading-color);
+      margin: 0;
+      font-weight: 800;
+      letter-spacing: 1px;
+    }
+    .brand-subtitle {
+      color: var(--subheading-color);
+      font-size: 0.95em;
+      margin-top: 4px;
+    }
+
+    /* Analytics Dashboard Cards */
+    .dashboard-grid {
+      grid-column: 1 / -1;
+      display: grid;
+      grid-template-columns: repeat(4, 1fr);
+      gap: 15px;
+      margin-bottom: 5px;
+    }
+    .dash-card {
+      background: var(--dash-bg);
+      padding: 16px;
+      border-radius: 12px;
+      text-align: center;
+      box-shadow: 0 4px 12px rgba(214, 51, 132, 0.06);
+      border: 1px solid var(--card-border);
+    }
+    .dash-card h4 { margin: 0; font-size: 0.8em; color: #a1a1aa; text-transform: uppercase; letter-spacing: 0.5px; }
+    .dash-card p { margin: 6px 0 0 0; font-size: 1.35em; font-weight: 800; color: var(--heading-color); }
+
+    /* Glassmorphism Cards */
+    .card { 
+      background: var(--card-bg); 
+      padding: 24px; 
+      border-radius: 16px; 
+      box-shadow: 0 10px 25px -5px rgba(0, 0, 0, 0.08); 
+      border: 1px solid var(--card-border);
+      transition: transform 0.3s ease, box-shadow 0.3s ease;
+    }
+
+    h2 { 
+      margin-top: 0; 
+      color: var(--heading-color); 
+      border-bottom: 2px dashed var(--input-border); 
+      padding-bottom: 12px; 
+      display: flex; 
+      justify-content: space-between; 
+      align-items: center; 
+      font-size: 1.25em;
+    }
+
+    label { display: block; margin-top: 14px; font-weight: 600; font-size: 0.88em; color: var(--subheading-color); }
+    
+    input, select, textarea { 
+      width: 100%; 
+      padding: 10px 12px; 
+      margin-top: 6px; 
+      border: 1.5px solid var(--input-border); 
+      border-radius: 8px; 
+      box-sizing: border-box; 
+      font-family: inherit; 
+      font-size: 0.9em;
+      background: var(--input-bg);
+      color: var(--text-color);
+      transition: all 0.25s ease;
+    }
+
+    input:focus, select:focus, textarea:focus { 
+      outline: none; 
+      border-color: var(--heading-color); 
+      box-shadow: 0 0 0 3px rgba(214, 51, 132, 0.15);
+    }
+
+    .form-row { display: flex; gap: 12px; }
+    .form-row > div { flex: 1; }
+
+    /* Add-ons Grid Styling */
+    .addons-container {
+      margin-top: 14px;
+      border: 1.5px solid var(--input-border);
+      border-radius: 8px;
+      padding: 12px;
+      background: var(--input-bg);
+    }
+    .addons-title {
+      font-weight: 700;
+      font-size: 0.88em;
+      color: var(--subheading-color);
+      margin-bottom: 8px;
+    }
+    .addons-grid {
+      display: grid;
+      grid-template-columns: repeat(2, 1fr);
+      gap: 8px;
+    }
+    .addon-item {
+      display: flex;
+      align-items: center;
+      gap: 8px;
+      font-size: 0.85em;
+      cursor: pointer;
+    }
+    .addon-item input {
+      width: auto;
+      margin: 0;
+      accent-color: #d63384;
+    }
+
+    /* Buttons with Animations */
+    button { 
+      margin-top: 18px; 
+      width: 100%; 
+      padding: 12px 18px; 
+      background: linear-gradient(135deg, #e11d48 0%, #d63384 100%); 
+      color: white; 
+      border: none; 
+      border-radius: 8px; 
+      font-weight: 700; 
+      font-size: 0.95em;
+      cursor: pointer; 
+      box-shadow: 0 4px 12px rgba(214, 51, 132, 0.25);
+      transition: all 0.2s cubic-bezier(0.4, 0, 0.2, 1); 
+    }
+
+    button:hover { 
+      background: linear-gradient(135deg, #be123c 0%, #be185d 100%);
+      transform: translateY(-2px);
+      box-shadow: 0 6px 16px rgba(214, 51, 132, 0.35);
+    }
+
+    .btn-print {
+      background: linear-gradient(135deg, #4b5563 0%, #374151 100%) !important;
+    }
+    .btn-whatsapp {
+      background: linear-gradient(135deg, #22c55e 0%, #16a34a 100%) !important;
+    }
+    .btn-excel {
+      background: linear-gradient(135deg, #16a34a 0%, #15803d 100%) !important;
+      width: auto !important;
+      padding: 7px 14px !important;
+      margin-top: 0 !important;
+      font-size: 0.8em !important;
+    }
+
+    /* Bill Receipt Styled Box */
+    .bill-preview { 
+      border: 2px dashed var(--input-border); 
+      padding: 18px; 
+      border-radius: 10px; 
+      background: var(--receipt-bg); 
+      margin-top: 12px; 
+      animation: fadeIn 0.4s ease-out;
+    }
+
+    .bill-row { display: flex; justify-content: space-between; margin: 8px 0; font-size: 0.95em; }
+
+    /* Table & History Styling */
+    .history-section { grid-column: 1 / -1; }
+    
+    .search-input { 
+      width: 180px; 
+      padding: 7px 12px; 
+      border: 1px solid var(--input-border); 
+      border-radius: 8px; 
+      font-size: 0.85em; 
+      font-weight: normal; 
+    }
+
+    table { width: 100%; border-collapse: collapse; margin-top: 12px; }
+    th, td { text-align: left; padding: 11px; border-bottom: 1px solid var(--input-border); font-size: 0.88em; }
+    th { background-color: rgba(214, 51, 132, 0.1); color: var(--heading-color); border-radius: 4px; }
+    
+    .btn-action { 
+      width: auto; 
+      padding: 6px 10px; 
+      margin: 0 2px 0 0; 
+      font-size: 0.78em; 
+      border-radius: 6px; 
+    }
+    
+    .btn-table-print { background: linear-gradient(135deg, #0284c7 0%, #0369a1 100%); }
+    .btn-table-whatsapp { background: linear-gradient(135deg, #16a34a 0%, #15803d 100%); }
+    .btn-delete { background: linear-gradient(135deg, #f43f5e 0%, #e11d48 100%); }
+    .btn-clear { 
+      background: linear-gradient(135deg, #ef4444 0%, #dc2626 100%); 
+      width: auto; 
+      padding: 7px 14px; 
+      margin-top: 0; 
+      font-size: 0.8em; 
+    }
+
+    @keyframes fadeIn {
+      from { opacity: 0; transform: translateY(6px); }
+      to { opacity: 1; transform: translateY(0); }
+    }
+
+    /* PRINT SPECIFIC STYLES */
+    @media print {
+      body { background: none; padding: 0; color: #000; }
+      .top-controls, .brand-header, .dashboard-grid, .card:not(#receiptCard), .history-section, button, .search-input {
+        display: none !important;
+      }
+      .app-container { display: block; }
+      #receiptCard { box-shadow: none; border: none; padding: 0; width: 100%; background: transparent; }
+      .bill-preview { border: 2px dashed #000; background: #fff; color: #000; }
+      .bill-preview * { color: #000 !important; }
+    }
+  </style>
+</head>
+<body>
+
+<!-- Dark Mode Toggle Button -->
+<div class="top-controls">
+  <button class="theme-toggle-btn" onclick="toggleDarkMode()" id="themeBtn">🌙 Dark Mode</button>
+</div>
+
+<!-- Header with Risto Bakes Logo -->
+<div class="brand-header">
+  <img src="1000241286.png" alt="Risto Bakes Logo" class="logo-img">
+  <h1 class="brand-title">RISTO BAKES</h1>
+  <div class="brand-subtitle">Order Billing & Sales Management System</div>
+</div>
+
+<div class="app-container">
+  <!-- Analytics Dashboard -->
+  <div class="dashboard-grid">
+    <div class="dash-card">
+      <h4>Today's Sales</h4>
+      <p id="dashToday">₹0.00</p>
+    </div>
+    <div class="dash-card">
+      <h4>This Month</h4>
+      <p id="dashMonth">₹0.00</p>
+    </div>
+    <div class="dash-card">
+      <h4>Total Revenue</h4>
+      <p id="dashTotal">₹0.00</p>
+    </div>
+    <div class="dash-card">
+      <h4>Total Orders</h4>
+      <p id="dashOrdersCount">0</p>
+    </div>
+  </div>
+
+  <!-- Input Form -->
+  <div class="card">
+    <h2>✨ New Order Details</h2>
+    <form id="cakeForm" onsubmit="event.preventDefault(); createAndSaveBill();">
+      <div class="form-row">
+        <div>
+          <label for="custName">Customer Name</label>
+          <input type="text" id="custName" placeholder="e.g. Sarah Jenkins" required>
+        </div>
+        <div>
+          <label for="custPhone">Phone Number</label>
+          <input type="tel" id="custPhone" placeholder="e.g. 9876543210">
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label for="flavour">Cake Flavour</label>
+          <input type="text" id="flavour" placeholder="e.g. Chocolate Truffle" required>
+        </div>
+        <div>
+          <label for="weight">Weight (kg)</label>
+          <select id="weight" required>
+            <option value="0.5">½ kg</option>
+            <option value="1.0" selected>1 kg</option>
+            <option value="1.5">1 ½ kg</option>
+            <option value="2.0">2 kg</option>
+            <option value="2.5">2 ½ kg</option>
+            <option value="3.0">3 kg</option>
+          </select>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label for="pricePerKg">Price per kg</label>
+          <input type="number" id="pricePerKg" value="600" min="1" step="0.01" required>
+        </div>
+        <div>
+          <label for="currency">Currency</label>
+          <input type="text" id="currency" value="₹" required>
+        </div>
+      </div>
+
+      <div class="form-row">
+        <div>
+          <label for="orderType">Order Type</label>
+          <select id="orderType">
+            <option value="Pickup">Store Pickup</option>
+            <option value="Delivery">Home Delivery</option>
+          </select>
+        </div>
+        <div>
+          <label for="deliveryDate">Delivery/Pickup Date</label>
+          <input type="date" id="deliveryDate">
+        </div>
+      </div>
+
+      <!-- Party Add-ons Section -->
+      <div class="addons-container">
+        <div class="addons-title">🎉 Party Add-Ons (Optional)</div>
+        <div class="addons-grid">
+          <label class="addon-item"><input type="checkbox" name="addon" value="Candle" data-price="20"> Candle (₹20)</label>
+          <label class="addon-item"><input type="checkbox" name="addon" value="Sparkles" data-price="30"> Sparkles (₹30)</label>
+          <label class="addon-item"><input type="checkbox" name="addon" value="Birthday Topper" data-price="50"> Birthday Topper (₹50)</label>
+          <label class="addon-item"><input type="checkbox" name="addon" value="Caps" data-price="40"> Caps (₹40)</label>
+          <label class="addon-item"><input type="checkbox" name="addon" value="Plates" data-price="30"> Plates (₹30)</label>
+          <label class="addon-item"><input type="checkbox" name="addon" value="Party Popper" data-price="60"> Party Popper (₹60)</label>
+          <label class="addon-item"><input type="checkbox" name="addon" value="Snow Spray" data-price="70"> Snow Spray (₹70)</label>
+          <label class="addon-item"><input type="checkbox" name="addon" value="HBD Decoration Kit" data-price="250"> HBD Kit (₹250)</label>
+        </div>
+      </div>
+
+      <label for="message">Optional Cake Message</label>
+      <textarea id="message" rows="2" placeholder="e.g. Happy Birthday Alex!"></textarea>
+
+      <button type="submit">🍰 Generate & Save Order</button>
+    </form>
+  </div>
+
+  <!-- Live Bill Preview Card -->
+  <div class="card" id="receiptCard">
+    <h2>📄 Bill Receipt Preview</h2>
+    <div id="billPreview" class="bill-preview">
+      <p style="text-align: center; color: #888; margin: 30px 0;">Fill out the form on the left or click "Print" on any saved order below.</p>
+    </div>
+    <div style="display: flex; gap: 10px;">
+      <button class="btn-print" onclick="window.print()" style="flex: 1;">🖨️ Print Receipt</button>
+      <button class="btn-whatsapp" id="btnShareWhatsApp" onclick="shareOnWhatsApp()" style="flex: 1; display:none;">📲 Share WhatsApp</button>
+    </div>
+  </div>
+
+  <!-- Saved Orders Log -->
+  <div class="card history-section">
+    <h2>
+      <span>📜 Saved Orders History</span>
+      <div style="display: flex; gap: 8px; align-items: center;">
+        <input type="text" id="searchInput" class="search-input" placeholder="Search orders..." onkeyup="filterHistory()">
+        <button class="btn-excel" onclick="exportToExcel()">📊 Export to Excel</button>
+        <button class="btn-clear" onclick="clearAllHistory()">Clear All</button>
+      </div>
+    </h2>
+    <table>
+      <thead>
+        <tr>
+          <th>Order Date</th>
+          <th>Customer</th>
+          <th>Phone</th>
+          <th>Flavour & Weight</th>
+          <th>Add-Ons</th>
+          <th>Delivery</th>
+          <th>Total</th>
+          <th>Actions</th>
+        </tr>
+      </thead>
+      <tbody id="historyTableBody">
+        <!-- Saved records render here -->
+      </tbody>
+    </table>
+  </div>
+</div>
+
+<script>
+  let activeCurrentOrder = null;
+
+  document.addEventListener('DOMContentLoaded', () => {
+    document.getElementById('deliveryDate').valueAsDate = new Date();
+    displayHistory();
+  });
+
+  function toggleDarkMode() {
+    document.body.classList.toggle('dark-mode');
+    const isDark = document.body.classList.contains('dark-mode');
+    document.getElementById('themeBtn').textContent = isDark ? '☀️ Light Mode' : '🌙 Dark Mode';
+  }
+
+  function createAndSaveBill() {
+    const customer = document.getElementById('custName').value.trim();
+    const phone = document.getElementById('custPhone').value.trim() || 'N/A';
+    const flavour = document.getElementById('flavour').value.trim();
+    const weight = parseFloat(document.getElementById('weight').value);
+    const pricePerKg = parseFloat(document.getElementById('pricePerKg').value);
+    const currency = document.getElementById('currency').value.trim() || '₹';
+    const orderType = document.getElementById('orderType').value;
+    const deliveryDate = document.getElementById('deliveryDate').value || 'Not specified';
+    const message = document.getElementById('message').value.trim() || 'None';
+    
+    // Calculate Add-ons
+    const addonCheckboxes = document.querySelectorAll('input[name="addon"]:checked');
+    let selectedAddons = [];
+    let addonsTotal = 0;
+
+    addonCheckboxes.forEach(cb => {
+      const name = cb.value;
+      const price = parseFloat(cb.getAttribute('data-price')) || 0;
+      selectedAddons.push({ name, price });
+      addonsTotal += price;
+    });
+
+    const cakeCost = weight * pricePerKg;
+    const totalCost = (cakeCost + addonsTotal).toFixed(2);
+    
+    const createdDateObj = new Date();
+    const createdDateTime = createdDateObj.toLocaleString();
+    const isoDate = createdDateObj.toISOString().split('T')[0];
+    const id = Date.now();
+
+    const orderRecord = {
+      id: id,
+      dateTime: createdDateTime,
+      isoDate: isoDate,
+      customer: customer,
+      phone: phone,
+      flavour: flavour,
+      weight: weight,
+      pricePerKg: pricePerKg,
+      cakeCost: cakeCost.toFixed(2),
+      addons: selectedAddons,
+      addonsTotal: addonsTotal.toFixed(2),
+      currency: currency,
+      deliveryDate: deliveryDate,
+      orderType: orderType,
+      message: message,
+      totalCost: totalCost
+    };
+
+    // Save Record
+    let existingOrders = JSON.parse(localStorage.getItem('ristoBakesOrders')) || [];
+    existingOrders.unshift(orderRecord);
+    localStorage.setItem('ristoBakesOrders', JSON.stringify(existingOrders));
+
+    // Render Preview
+    renderPreview(orderRecord);
+    displayHistory();
+  }
+
+  function renderPreview(order) {
+    activeCurrentOrder = order;
+    document.getElementById('btnShareWhatsApp').style.display = 'block';
+
+    let addonsHtml = '';
+    if (order.addons && order.addons.length > 0) {
+      addonsHtml = `<hr style="border: 0; border-top: 1px dashed var(--input-border); margin: 8px 0;">`;
+      order.addons.forEach(ao => {
+        addonsHtml += `<div class="bill-row"><span>+ ${ao.name}:</span> <span>${order.currency}${ao.price}</span></div>`;
+      });
+    }
+
+    const previewContainer = document.getElementById('billPreview');
+    previewContainer.innerHTML = `
+      <div style="text-align:center; margin-bottom: 12px;">
+        <img src="1000241286.png" style="width:65px; height:65px; border-radius:50%; margin-bottom:4px;">
+        <h3 style="margin:0; color:var(--heading-color); font-size:1.4em; letter-spacing: 0.5px;">RISTO BAKES</h3>
+        <small style="color:#888;">Order Date: ${order.dateTime}</small>
+      </div>
+      <div class="bill-row"><span><strong>Customer Name:</strong></span> <span>${order.customer}</span></div>
+      <div class="bill-row"><span><strong>Phone:</strong></span> <span>${order.phone}</span></div>
+      <div class="bill-row"><span><strong>Order Type:</strong></span> <span>${order.orderType} (${order.deliveryDate})</span></div>
+      <hr style="border: 0; border-top: 1px dashed var(--input-border); margin: 10px 0;">
+      <div class="bill-row"><span><strong>Cake (${order.weight} kg ${order.flavour}):</strong></span> <span>${order.currency}${order.cakeCost}</span></div>
+      ${addonsHtml}
+      <div class="bill-row"><span><strong>Cake Message:</strong></span> <span><em>"${order.message}"</em></span></div>
+      <hr style="border: 0; border-top: 1px dashed var(--input-border); margin: 10px 0;">
+      <div class="bill-row" style="font-size: 1.25em; font-weight: bold; color: var(--heading-color);">
+        <span>Total Amount:</span> <span>${order.currency}${order.totalCost}</span>
+      </div>
+      <p style="text-align:center; margin-top:14px; margin-bottom:0; font-size:0.82em; color:#888;">✨ Thank you for choosing Risto Bakes! ✨</p>
+    `;
+  }
+
+  function shareOnWhatsApp() {
+    if (!activeCurrentOrder) return;
+    const o = activeCurrentOrder;
+    
+    let addonText = '';
+    if (o.addons && o.addons.length > 0) {
+      addonText = "\n*Add-ons:* " + o.addons.map(a => `${a.name} (${o.currency}${a.price})`).join(', ');
+    }
+
+    const text = `*🎂 RISTO BAKES 🎂*\n` +
+                 `---------------------------\n` +
+                 `Hello *${o.customer}*! Here is your order receipt:\n\n` +
+                 `📅 *Date:* ${o.dateTime}\n` +
+                 `🍰 *Cake:* ${o.weight} kg ${o.flavour}\n` +
+                 `💬 *Message:* "${o.message}"` +
+                 addonText + `\n` +
+                 `📍 *Type:* ${o.orderType} (${o.deliveryDate})\n\n` +
+                 `💰 *TOTAL DUE:* *${o.currency}${o.totalCost}*\n\n` +
+                 `✨ Thank you for choosing Risto Bakes! ✨`;
+
+    let phoneNum = o.phone.replace(/[^0-9]/g, '');
+    let whatsappUrl = `https://api.whatsapp.com/send?phone=${phoneNum}&text=` + encodeURIComponent(text);
+    window.open(whatsappUrl, '_blank');
+  }
+
+  function displayHistory() {
+    const existingOrders = JSON.parse(localStorage.getItem('ristoBakesOrders')) || [];
+    renderTableRows(existingOrders);
+    updateDashboard(existingOrders);
+  }
+
+  function renderTableRows(orders) {
+    const historyTableBody = document.getElementById('historyTableBody');
+    
+    if (orders.length === 0) {
+      historyTableBody.innerHTML = `<tr><td colspan="8" style="text-align:center; color:#999; padding:18px;">No saved orders yet for Risto Bakes.</td></tr>`;
+      return;
+    }
+
+    historyTableBody.innerHTML = orders.map(order => {
+      const addonsSummary = order.addons && order.addons.length > 0 ? order.addons.map(a => a.name).join(', ') : 'None';
+      return `
+        <tr>
+          <td>${order.dateTime}</td>
+          <td><strong>${order.customer}</strong></td>
+          <td>${order.phone}</td>
+          <td>${order.flavour} (${order.weight} kg)</td>
+          <td><small>${addonsSummary}</small></td>
+          <td>${order.deliveryDate} (${order.orderType})</td>
+          <td><strong>${order.currency}${order.totalCost}</strong></td>
+          <td>
+            <button class="btn-action btn-table-print" onclick="loadOrderForPrint(${order.id})">Print</button>
+            <button class="btn-action btn-table-whatsapp" onclick="loadOrderAndWhatsApp(${order.id})">WhatsApp</button>
+            <button class="btn-action btn-delete" onclick="deleteSingleOrder(${order.id})">Delete</button>
+          </td>
+        </tr>
+      `;
+    }).join('');
+  }
+
+  function updateDashboard(orders) {
+    const todayStr = new Date().toISOString().split('T')[0];
+    const currentMonthStr = todayStr.substring(0, 7);
+
+    let todayTotal = 0;
+    let monthTotal = 0;
+    let grandTotal = 0;
+    let currencySymbol = '₹';
+
+    orders.forEach(order => {
+      const cost = parseFloat(order.totalCost) || 0;
+      currencySymbol = order.currency || '₹';
+      grandTotal += cost;
+
+      const orderIsoDate = order.isoDate || (new Date(order.dateTime).toISOString().split('T')[0]);
+      if (orderIsoDate === todayStr) todayTotal += cost;
+      if (orderIsoDate && orderIsoDate.startsWith(currentMonthStr)) monthTotal += cost;
+    });
+
+    document.getElementById('dashToday').textContent = `${currencySymbol}${todayTotal.toFixed(2)}`;
+    document.getElementById('dashMonth').textContent = `${currencySymbol}${monthTotal.toFixed(2)}`;
+    document.getElementById('dashTotal').textContent = `${currencySymbol}${grandTotal.toFixed(2)}`;
+    document.getElementById('dashOrdersCount').textContent = orders.length;
+  }
+
+  function loadOrderForPrint(id) {
+    const existingOrders = JSON.parse(localStorage.getItem('ristoBakesOrders')) || [];
+    const order = existingOrders.find(o => o.id === id);
+    if (order) {
+      renderPreview(order);
+      document.getElementById('receiptCard').scrollIntoView({ behavior: 'smooth' });
+    }
+  }
+
+  function loadOrderAndWhatsApp(id) {
+    const existingOrders = JSON.parse(localStorage.getItem('ristoBakesOrders')) || [];
+    const order = existingOrders.find(o => o.id === id);
+    if (order) {
+      renderPreview(order);
+      shareOnWhatsApp();
+    }
+  }
+
+  function deleteSingleOrder(id) {
+    let existingOrders = JSON.parse(localStorage.getItem('ristoBakesOrders')) || [];
+    existingOrders = existingOrders.filter(order => order.id !== id);
+    localStorage.setItem('ristoBakesOrders', JSON.stringify(existingOrders));
+    displayHistory();
+  }
+
+  function clearAllHistory() {
+    if (confirm("Are you sure you want to delete all saved orders for Risto Bakes?")) {
+      localStorage.removeItem('ristoBakesOrders');
+      displayHistory();
+    }
+  }
+
+  function filterHistory() {
+    const searchTerm = document.getElementById('searchInput').value.toLowerCase();
+    const existingOrders = JSON.parse(localStorage.getItem('ristoBakesOrders')) || [];
+    
+    const filtered = existingOrders.filter(order => 
+      order.customer.toLowerCase().includes(searchTerm) ||
+      order.flavour.toLowerCase().includes(searchTerm) ||
+      order.phone.toLowerCase().includes(searchTerm) ||
+      order.dateTime.toLowerCase().includes(searchTerm)
+    );
+
+    renderTableRows(filtered);
+  }
+
+  function exportToExcel() {
+    const existingOrders = JSON.parse(localStorage.getItem('ristoBakesOrders')) || [];
+    if (existingOrders.length === 0) {
+      alert("No order history available to export.");
+      return;
+    }
+
+    let csvContent = "data:text/csv;charset=utf-8,";
+    csvContent += "Order Date,Customer Name,Phone,Flavour,Weight (kg),Add-Ons,Order Type,Delivery Date,Message,Total Amount\n";
+
+    existingOrders.forEach(order => {
+      const addonsStr = order.addons ? order.addons.map(a => a.name).join('; ') : '';
+      const row = [
+        `"${order.dateTime}"`,
+        `"${order.customer}"`,
+        `"${order.phone}"`,
+        `"${order.flavour}"`,
+        `"${order.weight}"`,
+        `"${addonsStr}"`,
+        `"${order.orderType}"`,
+        `"${order.deliveryDate}"`,
+        `"${order.message.replace(/"/g, '""')}"`,
+        `"${order.currency}${order.totalCost}"`
+      ].join(",");
+      csvContent += row + "\n";
+    });
+
+    const encodedUri = encodeURI(csvContent);
+    const link = document.createElement("a");
+    link.setAttribute("href", encodedUri);
+    link.setAttribute("download", `Risto_Bakes_Orders_${new Date().toISOString().split('T')[0]}.csv`);
+    document.body.appendChild(link);
+    link.click();
+    document.body.removeChild(link);
+  }
+</script>
+
+</body>
+</html>
